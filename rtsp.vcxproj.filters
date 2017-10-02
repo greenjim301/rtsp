@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="r_sock.cpp" />
+    <ClCompile Include="r_thread.cpp" />
+    <ClCompile Include="rtsp.cpp" />
+    <ClCompile Include="dec_thread.cpp" />
+    <ClCompile Include="rev_thread.cpp" />
+    <ClCompile Include="ren_thread.cpp" />
+    <ClCompile Include="r_util.cpp" />
+    <ClCompile Include="vren_thread.cpp" />
+    <ClCompile Include="aren_thread.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="r_sock.h" />
+    <ClInclude Include="r_string.h" />
+    <ClInclude Include="r_thread.h" />
+    <ClInclude Include="rtsp.h" />
+    <ClInclude Include="rev_thread.h" />
+    <ClInclude Include="dec_thread.h" />
+    <ClInclude Include="ren_thread.h" />
+    <ClInclude Include="r_util.h" />
+    <ClInclude Include="media_track.h" />
+    <ClInclude Include="vren_thread.h" />
+    <ClInclude Include="aren_thread.h" />
+  </ItemGroup>
+</Project>
