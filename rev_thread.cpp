@@ -225,6 +225,9 @@ int rev_thread::ParseRtpRtcp(int8_t channel, uint8_t* buf, int len)
             }
             nal  = buf[0];
             type = nal & 0x1f;
+			
+			if(type == 6)  //drop sei
+			    return 0;
 			      
             /* Simplify the case (these are all the NAL types used internally by
              * the H.264 codec). */
