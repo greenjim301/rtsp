@@ -33,13 +33,13 @@ int vren_thread::Render(AVFrame* frame)
     int stride = d3d_rect.Pitch;  
 
     for(size_t i = 0;i < height;i++){  
-        memcpy(pDest + i * stride, frame->data[0] + i * width, width);  
+        memcpy(pDest + i * stride, frame->data[0] + i * stride, stride);  
     }  
     for(size_t i = 0;i < height/2;i++){  
-        memcpy(pDest + stride * height + i * stride / 2, frame->data[2]  + i * width / 2, width / 2);  
+        memcpy(pDest + stride * height + i * stride / 2, frame->data[2]  + i * stride / 2, stride / 2);  
     }  
     for(size_t i = 0;i < height/2;i++){  
-        memcpy(pDest + stride * height + stride * height / 4 + i * stride / 2,frame->data[1] + i * width / 2, width / 2);  
+        memcpy(pDest + stride * height + stride * height / 4 + i * stride / 2,frame->data[1] + i * stride / 2, stride / 2);  
     }
 
     if(D3D_OK !=  m_surface->UnlockRect())
