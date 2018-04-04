@@ -1,2 +1,2 @@
 # rtsp
-a simple rtsp player
+一个简单的rtsp播放器
