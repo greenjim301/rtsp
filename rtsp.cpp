@@ -56,7 +56,7 @@ int CALLBACK WinMain(
 #endif
 
 	rtsp_ctx* ctx = new rtsp_ctx;
-	r_string url("rtsp://192.168.1.108/1");
+	r_string url("rtsp://192.168.1.101:5544/mobile/test123");
 
     WNDCLASSA wc = {};
 

@@ -19,7 +19,21 @@ int vren_thread::Render(AVFrame* frame)
     {
         if(this->InitRender(frame->width, frame->height))
             return -1;
+
+		m_width = frame->width;
+		m_height = frame->height;
     }
+
+	if (m_width != frame->width || m_height != frame->height)
+	{
+		this->DestroyRender();
+
+		if (this->InitRender(frame->width, frame->height))
+			return -1;
+
+		m_width = frame->width;
+		m_height = frame->height;
+	}
 
     D3DLOCKED_RECT d3d_rect;  
     if(D3D_OK !=  m_surface->LockRect(&d3d_rect,NULL,D3DLOCK_DONOTWAIT))
@@ -30,17 +44,17 @@ int vren_thread::Render(AVFrame* frame)
     uint8_t * pDest = (BYTE *)d3d_rect.pBits;  
     size_t width = frame->width;
     size_t height = frame->height;
-    int stride = d3d_rect.Pitch;  
+	int stride =  d3d_rect.Pitch;
 
-    for(size_t i = 0;i < height;i++){  
-        memcpy(pDest + i * stride, frame->data[0] + i * stride, stride);  
-    }  
-    for(size_t i = 0;i < height/2;i++){  
-        memcpy(pDest + stride * height + i * stride / 2, frame->data[2]  + i * stride / 2, stride / 2);  
-    }  
-    for(size_t i = 0;i < height/2;i++){  
-        memcpy(pDest + stride * height + stride * height / 4 + i * stride / 2,frame->data[1] + i * stride / 2, stride / 2);  
-    }
+	for (size_t i = 0; i < height; i++) {
+		memcpy(pDest + i * stride, frame->data[0] + i * stride, stride);
+	}
+	for (size_t i = 0; i < height / 2; i++) {
+		memcpy(pDest + stride * height + i * stride / 2, frame->data[2] + i * stride / 2, stride / 2);
+	}
+	for (size_t i = 0; i < height / 2; i++) {
+		memcpy(pDest + stride * height + stride * height / 4 + i * stride / 2, frame->data[1] + i * stride / 2, stride / 2);
+	}
 
     if(D3D_OK !=  m_surface->UnlockRect())
     {

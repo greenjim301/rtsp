@@ -24,6 +24,8 @@ private:
     IDirect3DDevice9* m_d3d_device;
     IDirect3DSurface9* m_surface;
     RECT m_rtViewport; 
+	int m_width;
+	int m_height;
 };
 
 #endif
