@@ -2,6 +2,9 @@
 #define __VREN_THREAD_H__
 
 #include "ren_thread.h"
+#include <stdint.h>
+#include <GL/gl.h> 
+#include <GL/glu.h> 
 
 class vren_thread : public ren_thread
 {
@@ -13,10 +16,21 @@ public:
         m_hwhd = hwnd;
     }
 
+	void TryResizeViewport(size_t width, size_t height);
+
 private:
-    int Render(AVFrame* frame);
-    void DestroyRender();
-    int InitRender(size_t width, size_t height);
+	int Render(AVFrame* frame);
+	void DestroyRender();
+
+    int Render_d3d(AVFrame* frame);
+    void DestroyRender_d3d();
+    int InitRender_d3d(size_t width, size_t height);
+
+	int InitRender_gl(size_t width, size_t height);
+	int Render_gl(AVFrame* frame);
+	void DestroyRender_gl();
+
+	void ResizeViewport(size_t width, size_t height);
 
 private:
     HWND m_hwhd;
@@ -26,6 +40,15 @@ private:
     RECT m_rtViewport; 
 	int m_width;
 	int m_height;
+	
+	bool m_glInit;
+	HDC m_ghDC;
+	HGLRC m_ghRC;
+	uint8_t* m_y_data;
+	GLuint m_y_texture;
+	bool m_try_resize;
+	int m_new_width;
+	int m_new_height;
 };
 
 #endif

@@ -6,6 +6,8 @@
 
 const char kD3DClassName[] = "d3d_renderer";
 
+static rtsp_ctx* g_ctx = NULL;
+
 rtsp_ctx::rtsp_ctx()
 {
 }
@@ -14,13 +16,25 @@ rtsp_ctx::~rtsp_ctx()
 {
 }
 
+
 LRESULT WINAPI rtsp_ctx::WindowProc(HWND hwnd, UINT msg, WPARAM wparam,  LPARAM lparam) 
 {
     if (msg == WM_DESTROY || (msg == WM_CHAR && wparam == VK_RETURN)) {
         PostQuitMessage(0);
         return 0;
     }
+	else if (msg == WM_SIZE)
+	{
+		if (g_ctx)
+		{
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+			g_ctx->m_rev_thread.m_vren_thread.TryResizeViewport(rect.right, rect.bottom);
+		}
 
+		return 0;
+	}
+		
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
@@ -55,8 +69,8 @@ int CALLBACK WinMain(
      WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
-	rtsp_ctx* ctx = new rtsp_ctx;
-	r_string url("rtsp://192.168.1.101:5544/mobile/test123");
+	g_ctx = new rtsp_ctx;
+	r_string url("rtsp://192.168.2.31:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif");
 
     WNDCLASSA wc = {};
 
@@ -68,7 +82,7 @@ int CALLBACK WinMain(
 
     RegisterClassA(&wc);
 
-    ctx->m_hwhd = CreateWindowA(kD3DClassName,
+	g_ctx->m_hwhd = CreateWindowA(kD3DClassName,
         url.c_str(),
         WS_OVERLAPPEDWINDOW,
         0,
@@ -80,18 +94,18 @@ int CALLBACK WinMain(
         NULL,
         NULL);
 
-    if (ctx->m_hwhd == NULL) {
-        return Cleanup(ctx, -1);
+    if (g_ctx->m_hwhd == NULL) {
+        return Cleanup(g_ctx, -1);
     }
 
     // 显示窗口  
-    ShowWindow(ctx->m_hwhd, SW_SHOW);  
+    ShowWindow(g_ctx->m_hwhd, SW_SHOW);
 
     // 更新窗口  
-    UpdateWindow(ctx->m_hwhd);  
+    UpdateWindow(g_ctx->m_hwhd);
 	
-	ctx->m_rev_thread.SetParam(ctx->m_hwhd, url);	
-	ctx->m_rev_thread.Start();
+	g_ctx->m_rev_thread.SetParam(g_ctx->m_hwhd, url);
+	g_ctx->m_rev_thread.Start();
     
     MSG msg;  
     while(GetMessage(&msg, NULL, 0, 0))  
@@ -100,9 +114,9 @@ int CALLBACK WinMain(
         DispatchMessage(&msg);  
     }  
 
-    ctx->m_rev_thread.SetExitFlag();
-	ctx->m_rev_thread.WaitStop();
+	g_ctx->m_rev_thread.SetExitFlag();
+	g_ctx->m_rev_thread.WaitStop();
 
     r_log("end\n");
-    return Cleanup(ctx, 0);
+    return Cleanup(g_ctx, 0);
 }

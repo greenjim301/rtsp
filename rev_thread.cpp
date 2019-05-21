@@ -134,7 +134,6 @@ int rev_thread::Run()
 	return 0;
 }
 
-
 int rev_thread::ParseRtpRtcp(int8_t channel, uint8_t* buf, int len)
 {
     if (channel == 0 || channel == 2) {
@@ -653,7 +652,7 @@ int rev_thread::ParseSdp(char* buf, int size)
 				p += strlen("audio");
 			} else{
 				r_log("illegal sdp\n");
-				return -1;
+				return 0;
 			}
 
 			char* pp = strstr(p, "RTP/AVP");

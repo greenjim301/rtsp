@@ -26,6 +26,8 @@ public:
 		m_url = url;
 	}
 
+	vren_thread m_vren_thread;
+
 private:
     int ParseRtpRtcp(int8_t channel, uint8_t* buf, int len);
     void finalize_packet(media_track* tr, AVPacket* pkt);
@@ -37,6 +39,7 @@ private:
 	int SendRtspSetup(r_string& setup_url, const char* transport);
 	int StartPlay();
 	int StopPlay();
+
 
 private:
 	HWND m_hwhd;
@@ -61,7 +64,6 @@ private:
 	r_string m_sps;
 
 	dec_thread m_dec_thread;
-	vren_thread m_vren_thread; 
 	aren_thread m_aren_thread; 
 	int m_last_tt;
 };
