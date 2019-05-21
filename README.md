@@ -1,3 +1,2 @@
 # rtsp
-一个简单的rtsp播放器，简单介绍见
-https://blog.csdn.net/greenjim301/article/details/80559722
+简单的rtsp播放器，实现了rtp over tcp方式收流，h264、g711、aac等音视频解码，音频渲染使用xaudio,视频渲染支持d3d和opengl。
