@@ -2,7 +2,6 @@
 #define __REN_THREAD_H__
 
 #include "r_thread.h"
-#include <d3d9.h>
 
 struct AVFrame;
 

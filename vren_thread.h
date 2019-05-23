@@ -3,6 +3,8 @@
 
 #include "ren_thread.h"
 #include <stdint.h>
+#include <d3d9.h>
+
 #include <GL/gl.h> 
 #include <GL/glu.h> 
 
@@ -34,6 +36,7 @@ private:
 
 private:
     HWND m_hwhd;
+	bool m_d3dinit;
     IDirect3D9* m_d3d;
     IDirect3DDevice9* m_d3d_device;
     IDirect3DSurface9* m_surface;

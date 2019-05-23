@@ -6,6 +6,16 @@ extern "C"
 };
 
 #include "libyuv.h"
+#include "r_util.h"
+#include <d3d11.h>
+
+
+static  IDXGISwapChain* g_pSwapChain = NULL;
+static  ID3D11Device* g_pd3dDevice = NULL;
+static  ID3D11DeviceContext* g_pImmediateContext = NULL;
+static ID3D11RenderTargetView* g_pRenderTargetView = NULL;
+static ID3D11Texture2D * g_Texture = NULL;
+
 
 vren_thread::vren_thread()
     : m_hwhd(NULL)
@@ -17,13 +27,44 @@ vren_thread::vren_thread()
 	, m_ghRC(0)
 	, m_y_data(NULL)
 	, m_try_resize(false)
+	, m_d3dinit(false)
 {
 }
 
+static double  gT1 = 0;
+static int  gCount = 0;
+static double t1;
+static double t0;
+static double ta;
 
 int vren_thread::Render(AVFrame* frame)
 {
-	return this->Render_gl(frame);
+	t1 = GetTickCount();
+
+	if (t0)
+	{
+		gT1 += t1 - t0;
+	}
+	else {
+		ta = t1;
+	}
+
+	int ret = this->Render_d3d(frame);
+
+	t0 = GetTickCount();
+
+	++gCount;
+
+	if (gCount == 1000)
+	{
+		r_log("all time:%.4f, render time:%.4f\n",  t0 - ta, t0 - ta - gT1);
+
+		gCount = 0;
+		gT1 = 0;
+		t0 = 0;
+	}	
+
+	return ret;
 }
 
 void vren_thread::DestroyRender()
@@ -40,7 +81,7 @@ void vren_thread::DestroyRender()
 
 int vren_thread::Render_d3d(AVFrame* frame)
 {
-    if(m_d3d == NULL)
+    if(!m_d3dinit)
     {
         if(this->InitRender_d3d(frame->width, frame->height))
             return -1;
@@ -55,7 +96,36 @@ int vren_thread::Render_d3d(AVFrame* frame)
 			return -1;
 	}
 
-    D3DLOCKED_RECT d3d_rect;  
+
+	//uint8_t * pDest = m_y_data;
+	size_t width = frame->width;
+	size_t height = frame->height;
+	int stride = frame->linesize[0]; //d3d_rect.Pitch;
+
+	libyuv::I420ToARGB(frame->data[0],
+		stride,
+		frame->data[2],
+		stride / 2,
+		frame->data[1],
+		stride / 2,
+		m_y_data,
+		stride * 4,
+		width,
+		height);
+
+
+	ID3D11Texture2D* pBackBuffer;
+	// Get a pointer to the back buffer
+	g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+		(LPVOID*)&pBackBuffer);
+
+	g_pImmediateContext->UpdateSubresource(pBackBuffer, 0, NULL, m_y_data, stride * 4, 0);
+
+	g_pSwapChain->Present(0, 0);
+
+	return 0;
+
+    /*D3DLOCKED_RECT d3d_rect;  
     if(D3D_OK !=  m_surface->LockRect(&d3d_rect,NULL,D3DLOCK_DONOTWAIT))
     {
         return -1;
@@ -90,16 +160,78 @@ int vren_thread::Render_d3d(AVFrame* frame)
     m_d3d_device->EndScene();  
     m_d3d_device->Present( NULL, NULL, NULL, NULL );  
     pBackBuffer->Release();  
-
+	*/
     return 0;
 }
 
 int vren_thread::InitRender_d3d(size_t width, size_t height)
 {
+	DXGI_SWAP_CHAIN_DESC sd;
+	ZeroMemory(&sd, sizeof(sd));
+	sd.BufferCount = 1;
+	sd.BufferDesc.Width = width;
+	sd.BufferDesc.Height = height;
+	sd.BufferDesc.Format =  DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.RefreshRate.Numerator = 60;
+	sd.BufferDesc.RefreshRate.Denominator = 1;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.OutputWindow = m_hwhd;
+	sd.SampleDesc.Count = 1;
+	sd.SampleDesc.Quality = 0;
+	sd.Windowed = TRUE;
+
+	HRESULT hr = S_OK;
+	D3D_FEATURE_LEVEL  FeatureLevelsRequested = D3D_FEATURE_LEVEL_11_0;
+	UINT               numLevelsRequested = 1;
+	D3D_FEATURE_LEVEL  FeatureLevelsSupported;
+
+	if (FAILED(hr = D3D11CreateDeviceAndSwapChain(NULL,
+		D3D_DRIVER_TYPE_HARDWARE,
+		NULL,
+		0,
+		&FeatureLevelsRequested,
+		numLevelsRequested,
+		D3D11_SDK_VERSION,
+		&sd,
+		&g_pSwapChain,
+		&g_pd3dDevice,
+		&FeatureLevelsSupported,
+		&g_pImmediateContext)))
+	{
+		return hr;
+	}
+
+	ID3D11Texture2D* pBackBuffer;
+	// Get a pointer to the back buffer
+	hr = g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+		(LPVOID*)&pBackBuffer);
+
+	// Create a render-target view
+	g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL,
+		&g_pRenderTargetView);
+
+	// Bind the view
+	g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, NULL);
+
+	// Setup the viewport
+	D3D11_VIEWPORT vp;
+	vp.Width = width;
+	vp.Height = height;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	g_pImmediateContext->RSSetViewports(1, &vp);
+
 	m_width = width;
 	m_height = height;
 
     SetWindowPos(m_hwhd, NULL, 0, 0, width, height, SWP_NOZORDER);
+
+	m_d3dinit = true;
+	m_y_data = new uint8_t[width*height * 4];
+
+	return 0;
 
     m_d3d = Direct3DCreate9(D3D_SDK_VERSION);
     if (m_d3d == NULL) {
